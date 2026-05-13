@@ -40,29 +40,38 @@ def neutralize(input_fname, output_fname, ncpu, verbose):
 
     pool = Pool(max(min(cpu_count(), ncpu), 1))
 
-    with open(output_fname, "wt") as f:
+    input_format = 'smi' if input_fname is None else None
+
+    fo = open(output_fname, "wt") if output_fname is not None else sys.stdout
+    try:
         for i, line in enumerate(pool.imap(neutralize_item,
-                                           read_input(input_fname),
+                                           read_input(input_fname, input_format=input_format),
                                            chunksize=1), 1):
             if line:
-                f.write(line)
+                fo.write(line)
             if verbose and i % 1000 == 0:
                 sys.stderr.write(f'\rProcessed {i}')
-    if verbose:
-        sys.stderr.write(f'\n')
+        if verbose:
+            sys.stderr.write(f'\n')
+    finally:
+        if output_fname is not None:
+            fo.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description='Neutralize input structures. Explicit hydrogens will be removed')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
-                        help='input SDF or SMILES file.')
-    parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
-                        help='output SMILES file.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
+                        help='input SDF or SMILES file. If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--output', metavar='FILENAME', required=False, default=None, type=str,
+                        help='output SMILES file. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', default=1, type=int,
                         help='number of cpu to use for calculation. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='print progress to STDERR.')
     args = parser.parse_args()
+
+    if args.input == "/dev/stdin":
+        args.input = None
 
     neutralize(args.input, args.output, args.ncpu, args.verbose)
 

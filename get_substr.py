@@ -18,13 +18,17 @@ from multiprocessing import Pool, cpu_count
 
 
 def read_smiles_text(fname, sep='\t'):
-    with open(fname) as f:
+    f = open(fname) if fname is not None else sys.stdin
+    try:
         for line in f:
             tmp = line.strip().split(sep)
             if tmp and tmp[0]:
                 smi = tmp[0]
                 mol_title = tmp[1] if len(tmp) > 1 else smi
                 yield smi, mol_title
+    finally:
+        if fname is not None:
+            f.close()
 
 
 def match(mol_or_smi, mol_title, patterns, negate):
@@ -47,10 +51,12 @@ def match_mp(args, patterns, negate):
 
 def main():
     parser = argparse.ArgumentParser(description='Select compounds matching the specified substructure.')
-    parser.add_argument('-i', '--in', metavar='FILENAME', required=True,
-                        help='input SMILES/SDF file. SMILES file should contain no header.')
-    parser.add_argument('-o', '--out', metavar='FILENAME', required=True,
-                        help='output file with SMILES and compound names.')
+    parser.add_argument('-i', '--in', metavar='FILENAME', required=False, default=None,
+                        help='input SMILES/SDF file. SMILES file should contain no header. '
+                             'If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--out', metavar='FILENAME', required=False, default=None,
+                        help='output file with SMILES and compound names. '
+                             'If omitted output will be redirected to STDOUT.')
     parser.add_argument('-s', '--substr', metavar='SMARTS_STRING', required=True, nargs='+',
                         help='SMARTS string used for substructure matching. If multiple patterns were '
                              'supplied at least one of them should be matched or, if negate argument '
@@ -77,17 +83,22 @@ def main():
 
     patt = [Chem.MolFromSmarts(p) for p in pattern]
 
-    ext = os.path.splitext(in_fname)[1].lower().lstrip('.')
-    is_smiles = ext in ('smi', 'smiles')
+    if in_fname == "/dev/stdin":
+        in_fname = None
 
-    if is_smiles:
-        reader = read_smiles_text(in_fname)
+    if in_fname is None:
+        reader = read_smiles_text(None)
     else:
-        reader = read_input(in_fname, id_field_name=field_name)
+        ext = os.path.splitext(in_fname)[1].lower().lstrip('.')
+        is_smiles = ext in ('smi', 'smiles')
+        if is_smiles:
+            reader = read_smiles_text(in_fname)
+        else:
+            reader = read_input(in_fname, id_field_name=field_name)
 
-    if ncpu == 1:
-
-        with open(out_fname, 'wt') as f:
+    f = open(out_fname, 'wt') if out_fname is not None else sys.stdout
+    try:
+        if ncpu == 1:
             match_counter = 0
             for i, (mol_or_smi, mol_title) in enumerate(reader):
                 res = match(mol_or_smi, mol_title, patt, neg)
@@ -98,10 +109,8 @@ def main():
                 if verbose and (i + 1) % 100 == 0:
                     sys.stderr.write('\r%i molecules passed; matches: %i' % (i + 1, match_counter))
                     sys.stderr.flush()
-
-    else:
-        pool = Pool(max(1, min(ncpu, cpu_count())))
-        with open(out_fname, 'wt') as f:
+        else:
+            pool = Pool(max(1, min(ncpu, cpu_count())))
             match_counter = 0
             for i, res in enumerate(pool.imap(partial(match_mp, patterns=patt, negate=neg), reader), 1):
                 if res[0]:
@@ -111,6 +120,9 @@ def main():
                 if verbose and i % 100 == 0:
                     sys.stderr.write('\r%i molecules passed; matches: %i' % (i, match_counter))
                     sys.stderr.flush()
+    finally:
+        if out_fname is not None:
+            f.close()
 
 
 if __name__ == '__main__':

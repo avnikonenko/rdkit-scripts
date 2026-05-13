@@ -33,14 +33,20 @@ def main_params(in_fname, out_fname, ncpu, verbose):
 
     pool = Pool(ncpu)
 
-    with open(out_fname, 'wt') as fo:
-        for i, (mol, mol_name) in enumerate(pool.imap(get_largest_mp, read_input(in_fname, sanitize=True)), 1):
+    input_format = 'smi' if in_fname is None else None
+
+    fo = open(out_fname, 'wt') if out_fname is not None else sys.stdout
+    try:
+        for i, (mol, mol_name) in enumerate(pool.imap(get_largest_mp, read_input(in_fname, input_format=input_format, sanitize=True)), 1):
             if mol:
                 fo.write(f'{Chem.MolToSmiles(mol, isomericSmiles=True)}\t{mol_name}\n')
             if verbose and i % 1000 == 0:
                 sys.stderr.write(f'\r{i} records were processed')
-    if verbose:
-        sys.stderr.write('\n')
+        if verbose:
+            sys.stderr.write('\n')
+    finally:
+        if out_fname is not None:
+            fo.close()
 
 
 def main():
@@ -50,9 +56,9 @@ def main():
     parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None,
                         help='input file in SDF or SMILES format. SMILES input should have no header, '
                              'the first column is SMILES string and the second column with ID is optional. '
-                             'If omitted STDIN will be read as SDF format.')
-    parser.add_argument('-o', '--output', metavar='FILENAME', required=True,
-                        help='output file in SMILES format.')
+                             'If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--output', metavar='FILENAME', required=False, default=None,
+                        help='output file in SMILES format. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1, type=int,
                         help='Number of CPU cores to use. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
