@@ -28,8 +28,11 @@ def neutralize_atoms(mol):
 
 def neutralize_item(item):
     mol, mol_name = item
-    mol = neutralize_atoms(mol)
-    output = Chem.MolToSmiles(mol, isomericSmiles=True, canonical=True) + '\t' + mol_name + '\n'
+    try:
+        mol = neutralize_atoms(mol)
+        output = Chem.MolToSmiles(mol, isomericSmiles=True, canonical=True) + '\t' + mol_name + '\n'
+    except:
+        output = None
     return output
 
 
