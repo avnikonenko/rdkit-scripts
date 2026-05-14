@@ -10,12 +10,16 @@ from multiprocessing import Pool, cpu_count
 
 
 def read_smiles(fname, smiles_col, names_col, header):
-    with open(fname) as f:
+    f = open(fname) if fname is not None else sys.stdin
+    try:
         if header:
             f.readline()
         for line in f:
             tmp = line.split()
             yield tmp[smiles_col], tmp[names_col]
+    finally:
+        if fname is not None:
+            f.close()
 
 
 def check_smiles(input):
@@ -41,8 +45,9 @@ def init():
 
 def main():
     parser = argparse.ArgumentParser(description='Test input molecules for PAINS.')
-    parser.add_argument('-i', '--in', metavar='input.smi', required=True,
-                        help='input SMILES file. Fields are whitespace-separated.')
+    parser.add_argument('-i', '--in', metavar='input.smi', required=False, default=None,
+                        help='input SMILES file. Fields are whitespace-separated. '
+                             'If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--out', metavar='output.txt', required=True,
                         help='output text file with SMILES, names and found PAINS.')
     parser.add_argument('-s', '--smiles_col', default=0,

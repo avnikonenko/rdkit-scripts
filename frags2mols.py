@@ -26,22 +26,27 @@ def process_mol_map(items):
 def calc(input_fname, output_fname, ncpu, verbose):
 
     pool = Pool(max(min(cpu_count(), ncpu), 1))
+    input_format = 'smi' if input_fname is None else None
 
-    with open(output_fname, 'wt') as f:
-        for j, output_str in enumerate(pool.imap(process_mol_map, read_input(input_fname)), 1):
+    f = open(output_fname, 'wt') if output_fname is not None else sys.stdout
+    try:
+        for j, output_str in enumerate(pool.imap(process_mol_map, read_input(input_fname, input_format=input_format)), 1):
             if output_str:
                 f.write(output_str)
             if verbose and j % 1000 == 0:
                 sys.stderr.write(f'\r{j} molecules passed')
+    finally:
+        if output_fname is not None:
+            f.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description='Save disconnected components of input molecules as '
                                                  'individual molecules with added suffix to the name.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
-                        help='input SDF or SMILES file.')
-    parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
-                        help='output SMILES file.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
+                        help='input SDF or SMILES file. If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--output', metavar='FILENAME', required=False, default=None, type=str,
+                        help='output SMILES file. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', default=1, type=int,
                         help='number of cpu to use for calculation. Default: 1.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,

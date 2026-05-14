@@ -26,11 +26,12 @@ def calc(items):
 def main():
 
     parser = argparse.ArgumentParser(description='Conversion of input file to canonical SMILES with RDKit.')
-    parser.add_argument('-i', '--input', metavar='input.sdf', required=True,
+    parser.add_argument('-i', '--input', metavar='input.sdf', required=False, default=None,
                         help='input file with compounds. Supported formats: SMILES (*.smi), '
-                             'SDF (*.sdf, *.sdf.gz), Python pickled (*.pkl).')
-    parser.add_argument('-o', '--output', metavar='output.smi', required=True,
-                        help='output file with canonical SMILES.')
+                             'SDF (*.sdf, *.sdf.gz), Python pickled (*.pkl). '
+                             'If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--output', metavar='output.smi', required=False, default=None,
+                        help='output file with canonical SMILES. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', required=False, default=1, type=int,
                         help='number of CPUs to use for computation.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
@@ -38,17 +39,23 @@ def main():
 
     args = parser.parse_args()
 
-    with open(args.output, 'wt') as f:
+    input_fname = None if args.input == '/dev/stdin' else args.input
+    input_format = 'smi' if input_fname is None else None
+    f = open(args.output, 'wt') if args.output is not None else sys.stdout
+    try:
         if args.ncpu > 1:
             p = Pool(max(1, min(args.ncpu, cpu_count())))
-            iterator = p.imap(calc, read_input(args.input))
+            iterator = p.imap(calc, read_input(input_fname, input_format=input_format))
         else:
-            iterator = (calc(line) for line in read_input(args.input))
+            iterator = (calc(line) for line in read_input(input_fname, input_format=input_format))
         for i, res in enumerate(iterator, 1):
             if res[0]:
                 f.write('\t'.join(res) + '\n')
             if args.verbose and i % 10000 == 0:
                 sys.stderr.write(f'\r{i} molecules passed')
+    finally:
+        if args.output is not None:
+            f.close()
 
 
 if __name__ == '__main__':

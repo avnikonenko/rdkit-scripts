@@ -125,9 +125,10 @@ def main():
                                                  'FCsp3_BM: fraction of sp3 carbons for Bemis-Murcko scaffold\n'
                                                  'DoubleBondsUndefined: number of double bonds (unassigned)]\n',
                                      formatter_class=RawTextHelpFormatter)
-    parser.add_argument('-i', '--in', metavar='input.smi', required=True,
+    parser.add_argument('-i', '--in', metavar='input.smi', required=False, default=None,
                         help='input SMILES file. Should contain mol title as a second field.'
-                             'Fields are tab-separated. No header.')
+                             'Fields are tab-separated. No header. '
+                             'If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--out', metavar='output.txt', required=True,
                         help='output text file with calculated physicochemical properties. '
                              'Molecules causing errors will be reported to stderr.')
@@ -149,7 +150,8 @@ def main():
         f.write('\t'.join(['Name', 'HBA', 'HBD', 'complexity', 'NumRings', 'RTB', 'TPSA', 'logP', 'MR', 'MW', 'Csp3',
                            'fmf', 'QED', 'HAC', 'NumRingsFused', 'unique_HBAD', 'max_ring_size',
                            'ChiralCenters', 'ChiralCentersUndefined', 'FCsp3_BM', 'DoubleBondsUndefined']) + '\n')
-        for i, res in enumerate(p.imap(calc_mp, read_input(in_fname), chunksize=100), 1):
+        input_format = 'smi' if in_fname is None else None
+        for i, res in enumerate(p.imap(calc_mp, read_input(in_fname, input_format=input_format), chunksize=100), 1):
             if res:
                 f.write('\t'.join(map(str, res)) + '\n')
             if verbose and i % 100 == 0:

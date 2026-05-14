@@ -29,7 +29,8 @@ def read_smi(fname, sep, start_pos, nlines):
         end_pos = start_pos + nlines
     else:
         end_pos = float("inf")
-    with open(fname) as f:
+    f = open(fname) if fname is not None else sys.stdin
+    try:
         for i, line in enumerate(f):
             if i >= start_pos:
                 if i < end_pos:
@@ -39,13 +40,16 @@ def read_smi(fname, sep, start_pos, nlines):
                     else:
                         yield items[0], items[1]
                 else:
-                    raise StopIteration
+                    break
+    finally:
+        if fname is not None:
+            f.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description='Return Murcko scaffold ignoring stereoconfiguration.')
-    parser.add_argument('-i', '--in', metavar='input.smi', required=True,
-                        help='input SMILES file. No header.')
+    parser.add_argument('-i', '--in', metavar='input.smi', required=False, default=None,
+                        help='input SMILES file. No header. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--out', metavar='output.txt', required=True,
                         help='output text file with Murcko scaffolds. '
                              'Molecules causing errors will be reported to stderr.')

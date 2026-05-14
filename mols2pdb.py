@@ -16,7 +16,8 @@ from read_input import read_input
 
 
 def read_molfiles(input, output_path):
-    for mol, mol_name in read_input(input):
+    input_format = 'smi' if input is None else None
+    for mol, mol_name in read_input(input, input_format=input_format):
         yield mol, mol_name, output_path
 
 
@@ -52,8 +53,8 @@ def main():
                                                  'Hydrogens will be added and a random conformer will be generated '
                                                  'if the molecule does not have 3D coordinates.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-i', '--input', metavar='FILENAME', type=str, required=True,
-                        help='input path to .smi or .sdf file')
+    parser.add_argument('-i', '--input', metavar='FILENAME', type=str, required=False, default=None,
+                        help='input path to .smi or .sdf file. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output_path', metavar='DIRNAME', type=str, required=True,
                         help='path to a folder where will store molecules in pdb format files')
     parser.add_argument('-c', '--ncpu', type=int, default=1,
@@ -62,7 +63,8 @@ def main():
     args = parser.parse_args()
     output_path = args.output_path
     os.makedirs(output_path, exist_ok=True)
-    convert_to_pdb(input=os.path.abspath(args.input),
+    input_fname = None if args.input is None else os.path.abspath(args.input)
+    convert_to_pdb(input=input_fname,
                    output_path=os.path.abspath(output_path),
                    nprocess=args.ncpu)
 

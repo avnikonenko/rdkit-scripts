@@ -33,7 +33,8 @@ def compute_fps(mols, fp_type="morgan", nBits=2048, radius=2):
 
 def main():
     parser = argparse.ArgumentParser(description="2D UMAP projection of molecules")
-    parser.add_argument("-i", "--input", required=True, help="Input SMILES file")
+    parser.add_argument("-i", "--input", required=False, default=None,
+                        help="Input SMILES file. If omitted STDIN will be read as SMILES.")
     parser.add_argument("-o", "--output", required=True, help="Output coordinates file")
     parser.add_argument("-m", "--method", required=False, choices=['umap', 'tsne'], default='umap',
                         help="Output coordinates file")
@@ -46,7 +47,8 @@ def main():
     parser.add_argument("--metric", type=str, default="jaccard", help="UMAP distance metric")
     args = parser.parse_args()
 
-    mols, mol_names = zip(*(read_input(args.input)))
+    input_format = "smi" if args.input is None else None
+    mols, mol_names = zip(*(read_input(args.input, input_format=input_format)))
     fps = compute_fps(mols, args.fingerprint, args.n_bits, args.radius)
 
     if args.method == "umap":

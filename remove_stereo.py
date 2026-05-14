@@ -8,23 +8,29 @@ from multiprocessing import Pool, cpu_count
 
 
 def remove_stereo(input_fname, output_fname, verbose):
-    with open(output_fname, 'wt') as f:
-        for i, (mol, mol_name) in enumerate(read_input(input_fname), 1):
+    input_format = 'smi' if input_fname is None else None
+    f = open(output_fname, 'wt') if output_fname is not None else sys.stdout
+    i = 0
+    try:
+        for i, (mol, mol_name) in enumerate(read_input(input_fname, input_format=input_format), 1):
             if mol:
                 Chem.RemoveStereochemistry(mol)
                 f.write(f'{Chem.MolToSmiles(mol, isomericSmiles=True)}\t{mol_name}\n')
             if verbose and i % 1000 == 0:
                 sys.stderr.write(f'\rProcessed {i} molecules')
+    finally:
+        if output_fname is not None:
+            f.close()
     if verbose:
         sys.stderr.write(f'\rProcessed {i} molecules\n')
 
 
 def main():
     parser = argparse.ArgumentParser(description='Remove all stereo configurations from input molecules.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
-                        help='input SDF or SMILES file.')
-    parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
-                        help='output SMILES file.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
+                        help='input SDF or SMILES file. If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--output', metavar='FILENAME', required=False, default=None, type=str,
+                        help='output SMILES file. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='print progress to STDERR.')
     args = parser.parse_args()

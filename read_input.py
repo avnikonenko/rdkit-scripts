@@ -212,7 +212,7 @@ def read_input(fname, input_format=None, id_field_name=None, sanitize=True, sdf_
     """
     if input_format is None:
         tmp = os.path.basename(fname).split('.')
-        if tmp == 'gz':
+        if len(tmp) > 1 and tmp[-1].lower() == 'gz':
             input_format = '.'.join(tmp[-2:])
         else:
             input_format = tmp[-1]

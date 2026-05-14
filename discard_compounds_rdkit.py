@@ -17,13 +17,14 @@ good_elm = {'H', 'C', 'O', 'N', 'P', 'Cl', 'F', 'Br', 'I', 'S',
 
 
 def main_params(in_fname, good_fname, bad_fname):
+    input_format = 'smi' if in_fname is None else None
 
     if good_fname is not None:
         wgood = Chem.SDWriter(good_fname)
     if bad_fname is not None:
         wbad = Chem.SDWriter(bad_fname)
 
-    for mol, mol_name in read_input(in_fname, input_format='sdf', sanitize=False):
+    for mol, mol_name in read_input(in_fname, input_format=input_format, sanitize=False):
 
         if mol is not None:
             
@@ -64,7 +65,7 @@ def main():
     parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None,
                         help='input file in SDF or SMILES format. SMILES input should have no header, '
                              'the first column is SMILES string and the second column with ID is optional. '
-                             'If omitted STDIN will be read as SDF format.')
+                             'If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='FILENAME', required=True,
                         help='output file in SDF format.')
     parser.add_argument('-d', '--discarded', metavar='output.smi', required=False, default=None,

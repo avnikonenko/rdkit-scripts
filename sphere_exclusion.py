@@ -12,8 +12,8 @@ from read_input import read_input
 
 
 def pick(input_fname, output_fname, distance_threshold, seed):
-
-    mols = list(read_input(input_fname))
+    input_format = 'smi' if input_fname is None else None
+    mols = list(read_input(input_fname, input_format=input_format))
     mols = sorted(mols, key=lambda x: x[1])
     random.seed(seed)
     random.shuffle(mols)
@@ -27,8 +27,8 @@ def pick(input_fname, output_fname, distance_threshold, seed):
 def main():
     parser = argparse.ArgumentParser(description='Selection of diverse subset of molecules using the sphere '
                                                  'exclusion algorithm.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
-                        help='input SDF or SMILES file.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
+                        help='input SDF or SMILES file. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
                         help='names of selected molecules.')
     parser.add_argument('-d', '--distance', metavar='NUMERIC', default=0.65, type=float,

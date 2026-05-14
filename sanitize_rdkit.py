@@ -104,9 +104,10 @@ def main():
     parser.add_argument('-i', '--input', metavar='input.sdf', required=False, default=None,
                         help='input file in SDF or SMILES format. SMILES input should have no header, '
                              'the first column is SMILES string and the second column with ID is optional. '
-                             'If omitted STDIN will be read as SDF format.')
-    parser.add_argument('-f', '--input_format', metavar='sdf', required=False, default='sdf',
-                        help='input file format. Default: sdf.')
+                             'If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-f', '--input_format', metavar='sdf', required=False, default=None,
+                        help='input file format. If omitted format will be inferred from file extension, '
+                             'and STDIN is treated as SMILES.')
     parser.add_argument('-o', '--output', metavar='output.sdf', required=False, default=None,
                         help='output file in SDF format. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-g', '--output_format', metavar='sdf', required=False, default='sdf',
@@ -125,6 +126,8 @@ def main():
 
     if in_fname == "/dev/stdin":
         in_fname = None
+    if in_fname is None and input_format is None:
+        input_format = 'smi'
 
     calc(in_fname, out_fname, error_fname, input_format, output_format)
 

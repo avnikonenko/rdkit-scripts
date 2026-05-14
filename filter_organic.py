@@ -12,7 +12,8 @@ organic_atoms = {1, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53}
 
 
 def read_smiles(fname):
-    with open(fname) as f:
+    f = open(fname) if fname is not None else sys.stdin
+    try:
         for line in f:
             line = line.strip()
             if not line:
@@ -21,6 +22,9 @@ def read_smiles(fname):
             smi = parts[0]
             name = parts[1] if len(parts) > 1 else smi
             yield smi, name
+    finally:
+        if fname is not None:
+            f.close()
 
 
 def process_mol(items):
@@ -37,7 +41,7 @@ def calc(input_fname, organic_fname, inorganic_fname, ncpu, verbose):
 
     pool = Pool(max(min(cpu_count(), ncpu), 1))
 
-    w_organic = open(organic_fname, 'wt') if organic_fname else None
+    w_organic = open(organic_fname, 'wt') if organic_fname else sys.stdout
     w_inorganic = open(inorganic_fname, 'wt') if inorganic_fname else None
 
     n_organic = 0
@@ -63,7 +67,7 @@ def calc(input_fname, organic_fname, inorganic_fname, ncpu, verbose):
     if verbose:
         sys.stderr.write(f'\n{n_organic} organic, {n_inorganic} inorganic structures\n')
 
-    if w_organic:
+    if organic_fname is not None:
         w_organic.close()
     if w_inorganic:
         w_inorganic.close()
@@ -72,8 +76,9 @@ def calc(input_fname, organic_fname, inorganic_fname, ncpu, verbose):
 def main():
     parser = argparse.ArgumentParser(description='Split input structures into organic and inorganic sets. '
                                                  'Organic atoms are: H, B, C, N, O, F, P, S, Cl, Br, I.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True,
-                        help='input SMILES file (no header; first column SMILES, optional second column name).')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None,
+                        help='input SMILES file (no header; first column SMILES, optional second column name). '
+                             'If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='FILENAME', required=False, default=None,
                         help='output SMILES file for organic structures (only atoms from H, B, C, N, O, F, P, S, Cl, Br, I).')
     parser.add_argument('-d', '--inorganic', metavar='FILENAME', required=False, default=None,
@@ -83,9 +88,6 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='print progress to STDERR.')
     args = parser.parse_args()
-
-    if args.output is None and args.inorganic is None:
-        parser.error('at least one of --output or --inorganic must be specified.')
 
     calc(args.input, args.output, args.inorganic, args.ncpu, args.verbose)
 

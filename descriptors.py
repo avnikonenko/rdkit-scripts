@@ -17,8 +17,8 @@ def calc_ap(items):
 def main():
     parser = argparse.ArgumentParser(description='Calculate RDKit descriptors.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True,
-                        help='SMILES or SDFfile.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None,
+                        help='SMILES or SDFfile. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='FILENAME', required=True,
                         help='text file with a computed descriptor matrix.')
     parser.add_argument('-d', '--descr', metavar='STRING', default='AP', required=False,
@@ -36,7 +36,10 @@ def main():
 
     mol_names = []
     fps = []
-    for i, (mol_name, fp) in enumerate(pool.imap(funcs[args.descr], read_input(args.input), chunksize=100), 1):
+    input_format = 'smi' if args.input is None else None
+    for i, (mol_name, fp) in enumerate(pool.imap(funcs[args.descr],
+                                                 read_input(args.input, input_format=input_format),
+                                                 chunksize=100), 1):
         mol_names.append(mol_name)
         fps.append(fp)
         if i % 1000 == 0:

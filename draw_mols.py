@@ -20,19 +20,25 @@ DrawingOptions.elemDict = {}
 def process(input_fname, output_fname, mols_per_file, mols_per_row, template):
 
     mols = []
-    with open(input_fname) as f:
+    f = open(input_fname) if input_fname is not None else sys.stdin
+    try:
         for line in f:
             items = line.strip().split()
+            if not items:
+                continue
             m = Chem.MolFromSmiles(items[0])
             if m:
                 mols.append([m] + items[1:])
+    finally:
+        if input_fname is not None:
+            f.close()
 
     if template is not None:
 
         if template.endswith('.smi'):
             with open(template) as f:
                 smi = f.readline().strip().split()[0]
-                tmol = Chem.MolFromSmiles(ami)
+                tmol = Chem.MolFromSmiles(smi)
                 AllChem.Compute2DCoords(tmol)
         elif template.endswith('.mol'):
             tmol = Chem.MolFromMolFile(template)
@@ -72,8 +78,9 @@ def process(input_fname, output_fname, mols_per_file, mols_per_row, template):
 def main():
     parser = argparse.ArgumentParser(description='Create images from input molecules. If a reference structure was '
                                                  'supplied all molecule coordinates will be aligned correspondingly.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
-                        help='input SMILES file. No header. Separator whitespaces.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
+                        help='input SMILES file. No header. Separator whitespaces. '
+                             'If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
                         help='output PNG file.')
     parser.add_argument('-m', '--mols_per_file', metavar='INTEGER', required=False, default=None, type=int,

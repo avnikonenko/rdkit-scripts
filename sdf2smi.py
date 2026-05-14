@@ -4,11 +4,13 @@ __author__ = 'Pavel Polishchuk'
 
 
 import argparse
+import sys
 from rdkit import Chem
 
 
 def calc(input_fname, output_fname, field_name, extract_fields, sep):
-    with open(output_fname, "wt") as f:
+    f = open(output_fname, "wt") if output_fname is not None else sys.stdout
+    try:
         if extract_fields is not None:
             f.write('smi\tid\t' + '\t'.join(extract_fields) + '\n')
         for m in Chem.SDMolSupplier(input_fname):
@@ -27,14 +29,17 @@ def calc(input_fname, output_fname, field_name, extract_fields, sep):
                     f.write(smi + sep + n + sep + sep.join(fields) + '\n')
                 else:
                     f.write(smi + sep + n + '\n')
+    finally:
+        if output_fname is not None:
+            f.close()
 
 
 def main():
     parser = argparse.ArgumentParser(description='Convert SDF to canonical isomeric SMILES with mol titles.')
     parser.add_argument('-i', '--input', metavar='input.sdf', required=True,
                         help='input SDF file.')
-    parser.add_argument('-o', '--output', metavar='output.smi', required=True,
-                        help='output SMILES file.')
+    parser.add_argument('-o', '--output', metavar='output.smi', required=False, default=None,
+                        help='output SMILES file. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-f', '--field_name', metavar='FIELD_NAME', default=None,
                         help='sdf filed name which contains mol names. Optional. '
                              'If not specified mol titles will be used.')

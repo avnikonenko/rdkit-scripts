@@ -33,17 +33,23 @@ def enum_stereo(item, max_isomers, use_embedding, no_suffix):
 def enum_stereoisomers(input_fname, output_fname, max_isomers, use_embedding, no_suffix, ncpu, verbose):
 
     pool = Pool(max(min(cpu_count(), ncpu), 1))
+    input_format = 'smi' if input_fname is None else None
 
-    with open(output_fname, 'wt') as f:
+    f = open(output_fname, 'wt') if output_fname is not None else sys.stdout
+    i = 0
+    try:
         for i, items in enumerate(pool.imap_unordered(partial(enum_stereo,
                                                               max_isomers=max_isomers,
                                                               use_embedding=use_embedding,
                                                               no_suffix=no_suffix),
-                                                      read_input(input_fname)), 1):
+                                                      read_input(input_fname, input_format=input_format)), 1):
             for smi, mol_name in items:
                 f.write(f'{smi}\t{mol_name}\n')
             if verbose and i % 100 == 0:
                 sys.stderr.write(f'\r{i} molecules were processed')
+    finally:
+        if output_fname is not None:
+            f.close()
 
     if verbose:
         sys.stderr.write(f'\r{i} molecules were processed\n')
@@ -51,10 +57,10 @@ def enum_stereoisomers(input_fname, output_fname, max_isomers, use_embedding, no
 
 def main():
     parser = argparse.ArgumentParser(description='INSERT DESCRIPTION HERE.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
-                        help='input SDF or SMILES file.')
-    parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
-                        help='output SMILES file.')
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
+                        help='input SDF or SMILES file. If omitted STDIN will be read as SMILES.')
+    parser.add_argument('-o', '--output', metavar='FILENAME', required=False, default=None, type=str,
+                        help='output SMILES file. If omitted output will be redirected to STDOUT.')
     parser.add_argument('-m', '--max_isomers', metavar='INTEGER', default=1, type=int,
                         help='maximum number of stereoisomers generated. Default: 1.')
     parser.add_argument('-e', '--embed', action='store_true', default=False,

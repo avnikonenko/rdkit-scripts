@@ -19,6 +19,7 @@ def get_inchi_key(mol, stereo):
 def main_params(in_fname, dupl_fname, out_fname, ref_fname, stereo, ref_only):
 
     saver = Chem.SDWriter(out_fname)
+    input_format = 'smi' if in_fname is None else None
 
     d = dict()  # key - inchi_key, value - list of names
 
@@ -30,7 +31,7 @@ def main_params(in_fname, dupl_fname, out_fname, ref_fname, stereo, ref_only):
                 if inchi_key not in d.keys():
                     d[inchi_key] = [mol_name]
 
-    for i, (mol, mol_name)in enumerate(read_input(in_fname)):
+    for i, (mol, mol_name)in enumerate(read_input(in_fname, input_format=input_format)):
         if mol is not None:
             inchi_key = get_inchi_key(mol, stereo)
             if inchi_key not in d.keys():
@@ -50,8 +51,8 @@ def main_params(in_fname, dupl_fname, out_fname, ref_fname, stereo, ref_only):
 def main():
 
     parser = argparse.ArgumentParser(description='Remove duplicates by inchi keys comparison.')
-    parser.add_argument('-i', '--input', metavar='input.sdf', required=True,
-                        help='input SDF, SMI, SDF.GZ or PKL file.')
+    parser.add_argument('-i', '--input', metavar='input.sdf', required=False, default=None,
+                        help='input SDF, SMI, SDF.GZ or PKL file. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-r', '--reference', metavar='reference.sdf', required=False, default=None,
                         help='reference sdf file. If this file is specified than compounds from the input file '
                              'will be omitted if they are present in the reference file. If the input file contains '

@@ -13,7 +13,8 @@ from read_input import read_input
 
 
 def prep_input(fname, id_field_name, tetrahedral, double_bond, max_attempts, max_undef):
-    for mol, mol_name in read_input(fname, id_field_name=id_field_name):
+    input_format = 'smi' if fname is None else None
+    for mol, mol_name in read_input(fname, input_format=input_format, id_field_name=id_field_name):
         yield mol, mol_name, tetrahedral, double_bond, max_attempts, max_undef
 
 
@@ -198,9 +199,10 @@ def main_params(in_fname, out_fname, tetrahedral, double_bond, max_attempts, max
 def main():
 
     parser = argparse.ArgumentParser(description='Generation of stereoisomers with RDKit.')
-    parser.add_argument('-i', '--input', metavar='input.sdf', required=True,
+    parser.add_argument('-i', '--input', metavar='input.sdf', required=False, default=None,
                         help='input file in SDF or SMILES format. SMILES input should have no header, '
-                             'the first column is SMILES string and the second column with ID is optional.')
+                             'the first column is SMILES string and the second column with ID is optional. '
+                             'If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='output.smi', required=False, default=None,
                         help='output file in SMILES format. If omitted output will be made in STDOUT.')
     parser.add_argument('-t', '--tetrahedral', required=False, action='store_true', default=False,

@@ -111,10 +111,10 @@ def process_line(line):
 def main():
     parser = argparse.ArgumentParser(description='Compare charges in two sets of molecules and return SMILES strings '
                                                  'of charged centers along with charges in two sets of molecules.')
-    parser.add_argument('-i', '--input', metavar='FILENAME', required=True, type=str,
+    parser.add_argument('-i', '--input', metavar='FILENAME', required=False, default=None, type=str,
                         help='input SMILES file with 4 columns: SMILES (for reference), molecule name, the first set '
                              'of protonated SMILES and the second set of protonated SMILES. The file should have '
-                             'a header.')
+                             'a header. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='FILENAME', required=True, type=str,
                         help='output text file.')
     parser.add_argument('-c', '--ncpu', metavar='INTEGER', default=1, type=int,
@@ -125,16 +125,23 @@ def main():
 
     pool = Pool(max(min(cpu_count(), args.ncpu), 1))
 
-    with open(args.input) as f:
+    f = open(args.input) if args.input is not None else sys.stdin
+    try:
         with open(args.output, 'wt') as fout:
             header = f.readline().strip().split()
-            fout.write(f'smi\tid\tpattern\t{header[2]}_charge\t{header[3]}_charge\n')
+            if len(header) >= 4:
+                fout.write(f'smi\tid\tpattern\t{header[2]}_charge\t{header[3]}_charge\n')
+            else:
+                fout.write('smi\tid\tpattern\tset1_charge\tset2_charge\n')
             for i, res in enumerate(pool.imap(process_line, f, chunksize=10), 1):
                 if res:
                     for item in res:
                         fout.write(item)
                 if i % 1000 == 0:
                     sys.stderr.write(f'\rProcessed {i} lines')
+    finally:
+        if args.input is not None:
+            f.close()
 
             # for line in f:
             #     line = line.strip().split()
@@ -145,4 +152,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

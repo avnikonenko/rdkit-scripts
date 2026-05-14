@@ -4,14 +4,15 @@ __author__ = 'Pavel Polishchuk'
 
 
 import argparse
+import sys
 from rdkit import Chem
 
 
 def main():
     parser = argparse.ArgumentParser(description='Convert SMILES to SDF with additional fields if they are named and '
                                                  'exist.')
-    parser.add_argument('-i', '--input', metavar='input.smi', required=True,
-                        help='input SMILES file.')
+    parser.add_argument('-i', '--input', metavar='input.smi', required=False, default=None,
+                        help='input SMILES file. If omitted STDIN will be read as SMILES.')
     parser.add_argument('-o', '--output', metavar='output.sdf', required=True,
                         help='output SDF file.')
     parser.add_argument('--header', action='store_true', default=False,
@@ -25,7 +26,8 @@ def main():
 
     w = Chem.SDWriter(args.output)
 
-    with open(args.input) as fin:
+    fin = open(args.input) if args.input is not None else sys.stdin
+    try:
         line = fin.readline()
         if args.header or Chem.MolFromSmiles(line.strip().split(args.sep)[0]) is None:
             headers = line.strip().split(args.sep)[1:]
@@ -48,6 +50,9 @@ def main():
                         for (field_name, value) in zip(headers, tmp[1:]):
                             mol.SetProp(field_name, value)
                 w.write(mol)
+    finally:
+        if args.input is not None:
+            fin.close()
 
     w.close()
 
