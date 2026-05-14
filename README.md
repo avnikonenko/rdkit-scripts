@@ -52,6 +52,7 @@ Some scripts may require further dependencies.
 | `compare_charged_centers`       | Get SMILES patterns of charged centers in two sets of molecules.                            |
 | `count_undefined_stereocenters` | Count undefined stereocenters and print names + counts.                                     |
 | `discard_compounds_rdkit`       | Remove multi-component & non-organic molecules.                                             |
+| `discard_radicals`              | Discard structures containing radical electrons.                                            |
 | `filter_organic`                | Split structures into organic (H, B, C, N, O, F, P, S, Cl, Br, I only) and inorganic sets.  |
 | `draw_mols`                     | Return PNG images of molecules.                                                             |
 | `filter_conf`                   | Filter conformers by RMS value.                                                             |
