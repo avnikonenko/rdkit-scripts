@@ -49,6 +49,7 @@ Some scripts may require further dependencies.
 |---------------------------------|---------------------------------------------------------------------------------------------|
 | `add_h`                         | Add hydrogens to molecules.                                                                 |
 | `calc_center_rdkit`             | Calculate geometric center of atoms.                                                        |
+| `clust_scaffolds`               | Cluster molecules by Murcko scaffold network levels.                                        |
 | `compare_charged_centers`       | Get SMILES patterns of charged centers in two sets of molecules.                            |
 | `count_undefined_stereocenters` | Count undefined stereocenters and print names + counts.                                     |
 | `discard_compounds_rdkit`       | Remove multi-component & non-organic molecules.                                             |
