@@ -49,7 +49,7 @@ def main():
                              'preserved.')
     args = parser.parse_args()
 
-    filter_mols(args.input, args.output, args.names, args.order)
+    filter_mols(args.input, args.output, args.names, args.ordered)
 
 
 if __name__ == '__main__':
