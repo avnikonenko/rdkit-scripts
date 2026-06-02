@@ -25,6 +25,7 @@ Some scripts may require further dependencies.
 | `insert_sdf`           | Add data from a text file as additional fields to input SDF file.           |
 | `remove_dupl_by_field` | Remove entries from SDF file having duplicated mol title or field value.    |
 | `rename_mols`          | Identify identical entries (conformers) and rename consistently.            |
+| `rename_mols_simple`   | Rename SDF titles using a tab-separated old/new names file.                 |
 | `sdf_field2title`      | Insert field values into molecular title (or SMILES, or sequential titles). |
 | `sdf_title2field`      | Insert molecular title into a given SDF field.                              |
 | `strip_blank_lines`    | Remove empty lines in multi-line field values in input SDF.                 |
