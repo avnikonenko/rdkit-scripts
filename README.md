@@ -72,6 +72,7 @@ Some scripts may require further dependencies.
 | `neutralize`                    | Neutralize structures.                                                                      |
 | `physchem_calc`                 | Calculate physicochemical properties (MW, logP, TPSA, QED, etc.).                           |
 | `pmapper_descriptors`           | Calculate 3D pharmacophore descriptors (with `pmapper`).                                    |
+| `remove_isotopes`               | Remove isotope labels and removable explicit hydrogens.                                     |
 | `remove_stereo`                 | Remove stereoconfiguration from all centers.                                                |
 | `remove_dupl_rdkit`             | Remove duplicates via InChi key comparison.                                                 |
 | `rmsd_rdkit`                    | Calculate RMSD (MCS if atom matching fails, with symmetry checks).                          |
