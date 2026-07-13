@@ -75,7 +75,8 @@ def rmsd(mol, mol_name, ref, chirality, align):
     return round(min_rmsd, 3)
 
 
-def main_params(input_fnames, input_smi, output_fname, ref_name, refsmi, chirality, regex, align):
+def main_params(input_fnames, input_smi, output_fname, ref_name, refsmi, chirality, regex, align,
+                ignore_name_matching):
 
     if ref_name.lower().endswith('.mol2'):
         ref = Chem.MolFromMol2File(ref_name, removeHs=True)
@@ -84,7 +85,10 @@ def main_params(input_fnames, input_smi, output_fname, ref_name, refsmi, chirali
     elif ref_name.lower().endswith('.mol'):
         ref = Chem.MolFromMolFile(ref_name, removeHs=True)
     elif ref_name.lower().endswith('.sdf'):
-        ref = {m.GetProp('_Name'): m for m in Chem.SDMolSupplier(ref_name) if m}
+        if ignore_name_matching:
+            ref = [(m.GetProp('_Name'), m) for m in Chem.SDMolSupplier(ref_name) if m]
+        else:
+            ref = {m.GetProp('_Name'): m for m in Chem.SDMolSupplier(ref_name) if m}
     else:
         sys.stderr.write('Wrong format of the reference file. Only MOL2, PDBQT and SDF files are allowed.\n')
         raise ValueError
@@ -132,7 +136,15 @@ def main_params(input_fnames, input_smi, output_fname, ref_name, refsmi, chirali
                     else:
                         mol_name = os.path.basename(in_fname)
                 # assign ref mol object
-                if isinstance(ref, dict):
+                if isinstance(ref, list):
+                    for refmol_name, refmol in ref:
+                        mol_rmsd = rmsd(mol, mol_name, refmol, chirality, align)
+                        if mol_rmsd is not None:
+                            print(f'{mol_name}\t{i}\t{refmol_name}\t{mol_rmsd}')
+                        else:
+                            print(f'{mol_name}\t{i}\t{refmol_name}\tNo matches')
+                    continue
+                elif isinstance(ref, dict):
                     try:
                         refmol = ref[mol.GetProp('_Name')]
                     except KeyError:
@@ -152,9 +164,10 @@ def main_params(input_fnames, input_smi, output_fname, ref_name, refsmi, chirali
 
 
 def main():
-    parser = argparse.ArgumentParser(description='''Calc RMSD between a reference molecule and docked poses.
-                                                 If reference molecule is not substructure of the docked molecule
-                                                 maximum common substructure is used.''')
+    parser = argparse.ArgumentParser(description='''Calc RMSD between a reference molecule and an input molecule (docked poses).
+                                                 If reference molecule is not substructure of the input molecule
+                                                 maximum common substructure is used. SDF references can also be
+                                                 compared all-to-all with input molecules.''')
     parser.add_argument('-i', '--input', metavar='FILENAME', required=True, nargs='*',
                         help='input MOL2/PDBQT/SDF file(s) to compare with a reference molecule or molecules.')
     parser.add_argument('--input_smi', metavar='FILENAME', required=False, default=None,
@@ -182,6 +195,9 @@ def main():
     parser.add_argument('-x', '--nochirality', action='store_true', default=False,
                         help='choose this option if you want to omit matching chirality in substructure search. '
                              'By default chirality is considered.')
+    parser.add_argument('--ignore_name_matching', action='store_true', default=False,
+                        help='for SDF reference files, compare each input molecule to each reference molecule '
+                             'instead of matching molecules by name.')
 
     args = parser.parse_args()
     if (args.refsmi is not None) and (args.refsmi.lower().endswith('.smi') or args.refsmi.lower().endswith('.smiles')):
@@ -190,7 +206,8 @@ def main():
     else:
         refsmi = args.refsmi
 
-    main_params(args.input, args.input_smi, args.output, args.reference, refsmi, not args.nochirality, args.regex, args.align)
+    main_params(args.input, args.input_smi, args.output, args.reference, refsmi, not args.nochirality, args.regex,
+                args.align, args.ignore_name_matching)
 
 
 if __name__ == '__main__':
